@@ -184,7 +184,7 @@ class ManageArduinoCLI(WindowLayout):
 
     def get_library_list(self):
         """
-        Get list of library dependencies from product details
+        Get list of library dependencies from product details.
         """
         self.library_list = []
         for product in pd:
@@ -194,13 +194,27 @@ class ManageArduinoCLI(WindowLayout):
 
     def update_package_list(self, switch):
         """
-        Maintain the list of packages to install/refresh when switches updated
+        Maintain the list of packages to install/refresh when switches updated.
+
+        We don't have a method to remove package support at the moment, so turning a switch off really does not much.
+
+        If we need to install a package though, we need to start that happening as soon as the switch is enabled.
+
+        - If the CLI is not installed, we need to ensure it is installed first.
+        - If the CLI is already installed, skip to just installing the packages.
         """
         if switch.cget("variable").get() == "on":
             if not switch.cget("text") in self.package_dict:
                 self.package_dict[switch.cget("text")] = self.acli.extra_platforms[switch.cget("text")]["platform_id"]
                 self.log.debug("Enable package and install %s",
                                self.acli.extra_platforms[switch.cget("text")]["platform_id"])
+                # self.packages_to_install = self.package_dict.copy()
+                # if not self.acli.is_installed(self.acli.cli_file_path()):
+                #     self._generate_install_cli()
+                # else:
+                #     self.process_status = "start"
+                #     self.disable_input_states(self)
+                #     self._install_packages()
         elif switch.cget("variable").get() == "off":
             if switch.cget("text") in self.package_dict:
                 del self.package_dict[switch.cget("text")]
@@ -611,6 +625,7 @@ class ManageArduinoCLI(WindowLayout):
         """
         Method to finalise the processes on successful completion.
         """
+        print("Should be restoring everything now")
         self.log.debug("_process_finished()")
         self.process_stop()
         self.restore_input_states()
