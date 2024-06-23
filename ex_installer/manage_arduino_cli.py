@@ -251,7 +251,7 @@ class ManageArduinoCLI(WindowLayout):
                     self._check_cli_version()
                 case "get_platforms":
                     self._get_installed_platforms()
-                    self._install_packages()
+#                    self._install_packages()
                 case _:
                     self._process_error()
 
@@ -347,8 +347,20 @@ class ManageArduinoCLI(WindowLayout):
                                                        f"{required_version}")
                                     else:
                                         self.log.debug(f"Must update {platformid} from {installed} to {latest}")
+                                    # update_package_list does the install as well
                                     self.update_package_list(child)
-
+#                                    print(platformid + "@" + required_version)
+#                                    print(self.packages_to_install)
+#                                    for index in self.packages_to_install:
+#                                        to_install = self.packages_to_install[index]
+#                                        to_compare = (to_install.split('@', 2))[0]
+#                                        if to_compare == platformid:
+#                                            print("installing", to_install, index)
+#                                            self._install_single_package(index, to_install)
+#                                    package = next(iter(self.packages_to_install))
+#                                    packagestr = self.packages_to_install[package]
+#                                    del self.packages_to_install[package]
+#                                    self._install_single_package(package, packagestr)
             self.restore_input_states()
             self.process_stop()
         else:
@@ -433,6 +445,7 @@ class ManageArduinoCLI(WindowLayout):
         self.process_error(self.process_topic)
         self.restore_input_states()
         self.log.error(f"Error encountered in process phase {self.process_phase}")
+#        traceback.print_stack()
         self.log.error(self.process_data)
 
     def _download_cli(self):
@@ -559,11 +572,11 @@ class ManageArduinoCLI(WindowLayout):
         Any other status is an error.
         """
         self.log.debug(f"_install_packages() {self.process_status}")
-        if self.process_status == "start" or (len(self.packages_to_install) > 0 and self.process_status == "success"):
-            package = next(iter(self.packages_to_install))
-            packagestr = self.packages_to_install[package]
-            del self.packages_to_install[package]
-            self._install_single_package(package, packagestr)
+        if self.process_status == "start": # or (len(self.packages_to_install) > 0 and self.process_status == "success"):
+            for package in self.packages_to_install:
+                packagestr = self.packages_to_install[package]
+                self._install_single_package(package, packagestr)
+            self.packages_to_install = []
         elif self.process_status == "success":
             self.process_status = "start"
             self.libraries_to_install = self.library_list.copy()
