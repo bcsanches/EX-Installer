@@ -208,13 +208,13 @@ class ManageArduinoCLI(WindowLayout):
                 self.package_dict[switch.cget("text")] = self.acli.extra_platforms[switch.cget("text")]["platform_id"]
                 self.log.debug("Enable package and install %s",
                                self.acli.extra_platforms[switch.cget("text")]["platform_id"])
-                # self.packages_to_install = self.package_dict.copy()
-                # if not self.acli.is_installed(self.acli.cli_file_path()):
-                #     self._generate_install_cli()
-                # else:
-                #     self.process_status = "start"
-                #     self.disable_input_states(self)
-                #     self._install_packages()
+                self.packages_to_install = self.package_dict.copy()
+                if not self.acli.is_installed(self.acli.cli_file_path()):
+                    self._generate_install_cli()
+                else:
+                    self.process_status = "start"
+                    self.disable_input_states(self)
+                    self._install_packages()
         elif switch.cget("variable").get() == "off":
             if switch.cget("text") in self.package_dict:
                 del self.package_dict[switch.cget("text")]
@@ -231,6 +231,8 @@ class ManageArduinoCLI(WindowLayout):
         # This doesn't work for some reason, call with None for now
         # self.event_generate("<<Check_Arduino_CLI>>")
         self.check_arduino_cli(None)
+        # Generate Manage CLI event to get back into the manage flow of events
+        self.event_generate("<<Manage_CLI>>")
 
     def check_arduino_cli(self, event):
         """
