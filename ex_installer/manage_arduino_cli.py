@@ -361,8 +361,9 @@ class ManageArduinoCLI(WindowLayout):
 #                                    packagestr = self.packages_to_install[package]
 #                                    del self.packages_to_install[package]
 #                                    self._install_single_package(package, packagestr)
-            self.restore_input_states()
-            self.process_stop()
+            self._process_finished()
+#            self.restore_input_states()
+#            self.process_stop()
         else:
             self.process_error("An unknown error occurred")
 
@@ -644,7 +645,7 @@ class ManageArduinoCLI(WindowLayout):
         """
         Method to finalise the processes on successful completion.
         """
-        print("Should be restoring everything now")
+#        print("Should be restoring everything now")
         self.log.debug("_process_finished()")
         self.process_stop()
         self.restore_input_states()
