@@ -23,6 +23,9 @@ You should have received a copy of the GNU General Public License
 along with CommandStation.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+#for debugging
+#import traceback
+
 # Import Python modules
 import customtkinter as ctk
 from PIL import Image
@@ -199,9 +202,15 @@ class WindowLayout(ctk.CTkFrame):
         self.next_back.show_log_button()
 
     def disable_input_states(self, widget):
+        self.restore_input_states()
+        self.disable_input_states_internal(widget)
+#        print("In disable_input_states Widgets:", self.widget_states)
+
+    def disable_input_states_internal(self, widget):
         """
         Stores current state of all child input widgets then sets to disabled
         """
+#        traceback.print_stack()
         children = widget.winfo_children()
         for child in children:
             if isinstance(child, (ctk.CTkButton, ctk.CTkComboBox, ctk.CTkCheckBox, ctk.CTkEntry,
@@ -211,15 +220,19 @@ class WindowLayout(ctk.CTkFrame):
                     "state": child.cget("state")
                 }
                 self.widget_states.append(widget_state)
+#                print( widget_state["widget"], "set from", widget_state["state"], "to disabled")
                 child.configure(state="disabled")
-            self.disable_input_states(child)
+            self.disable_input_states_internal(child)
 
     def restore_input_states(self):
         """
         Restores the state of all widgets
         """
+#        traceback.print_stack()
         for widget in self.widget_states:
             widget["widget"].configure(state=widget["state"])
+#            print( widget["widget"], "set to", widget["state"])
+        self.widget_states = []
 
     @staticmethod
     def get_exception(error):
