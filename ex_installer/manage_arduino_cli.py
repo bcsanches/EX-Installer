@@ -21,6 +21,9 @@ You should have received a copy of the GNU General Public License
 along with CommandStation.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+# for debug
+#import traceback
+
 # Import Python modules
 import customtkinter as ctk
 import logging
@@ -248,6 +251,7 @@ class ManageArduinoCLI(WindowLayout):
                     self._check_cli_version()
                 case "get_platforms":
                     self._get_installed_platforms()
+                    self._install_packages()
                 case _:
                     self._process_error()
 
