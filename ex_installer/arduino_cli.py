@@ -250,6 +250,8 @@ class ArduinoCLI:
         "DCC-EX EX-CSB1": "EXCSB1"
     }
 
+    thread = None;
+
     def __init__(self, selected_device=None):
         """
         Initialise the Arduino CLI instance
@@ -262,6 +264,14 @@ class ArduinoCLI:
 
         # Set up logger
         self.log = logging.getLogger(__name__)
+
+    def start_acli_thread(self, file_path, params, queue, time_limit=300):
+        if (not self.thread is None) and self.thread.is_alive():
+            self.log.debug("Waiting for thread %s to finish", self.thread.name)
+            self.thread.join()
+        self.thread = ThreadedArduinoCLI(file_path, params, queue, time_limit)
+        self.log.debug("Starting new thread %s", self.thread.name)
+        self.thread.start()
 
     def cli_file_path(self):
         """
@@ -320,8 +330,7 @@ class ArduinoCLI:
         """
         if self.is_installed(file_path):
             params = ["version", "--format", "jsonmini"]
-            acli = ThreadedArduinoCLI(file_path, params, queue)
-            acli.start()
+            self.start_acli_thread(file_path, params, queue)
         else:
             queue.put(
                 QueueMessage("error", "Arduino CLI is not installed", "Arduino CLI is not installed")
@@ -336,8 +345,7 @@ class ArduinoCLI:
         """
         if self.is_installed(file_path):
             params = ["core", "list", "--format", "jsonmini"]
-            acli = ThreadedArduinoCLI(file_path, params, queue)
-            acli.start()
+            self.start_acli_thread(file_path, params, queue)
         else:
             queue.put(
                 QueueMessage("error", "Arduino CLI is not installed", "Arduino CLI is not installed")
@@ -368,8 +376,11 @@ class ArduinoCLI:
                     tempfile.gettempdir(),
                     ArduinoCLI.arduino_downloads[_installer].split("/")[-1]
                 )
-                download = ThreadedDownloader(ArduinoCLI.arduino_downloads[_installer], _target_file, queue)
-                download.start()
+                if (not self.thread is None) and self.thread.is_alive():
+                    self.log.debug("Waiting for thread %s to finish", self.thread.name)
+                    self.thread.join()
+                self.thread = ThreadedDownloader(ArduinoCLI.arduino_downloads[_installer], _target_file, queue)
+                self.thread.start()
             else:
                 self.log.error("No Arduino CLI available for this operating system")
                 queue.put(
@@ -392,8 +403,11 @@ class ArduinoCLI:
                     QueueMessage("error", "Could not create Arduino CLI directory", message)
                 )
                 return
-        extract = ThreadedExtractor(download_file, cli_directory, queue)
-        extract.start()
+        if (not self.thread is None) and self.thread.is_alive():
+            self.log.debug("Waiting for thread %s to finish", self.thread.name)
+            self.thread.join()
+        self.thread = ThreadedExtractor(download_file, cli_directory, queue)
+        self.thread.start()
 
     def initialise_config(self, file_path, queue):
         """
@@ -408,56 +422,49 @@ class ArduinoCLI:
                 platform_list.append(self.extra_platforms[extra_platform]["url"])
             _url_list = ",".join(platform_list)
             params += ["--additional-urls", _url_list]
-        acli = ThreadedArduinoCLI(file_path, params, queue)
-        acli.start()
+        self.start_acli_thread(file_path, params, queue)
 
     def update_index(self, file_path, queue):
         """
         Update the Arduino CLI core index
         """
         params = ["core", "update-index", "--format", "jsonmini"]
-        acli = ThreadedArduinoCLI(file_path, params, queue)
-        acli.start()
+        self.start_acli_thread(file_path, params, queue)
 
     def get_package_list(self, file_path, queue):
         """
         Get list of Arduino packages to install
         """
         params = ["core", "list", "--format", "jsonmini"]
-        acli = ThreadedArduinoCLI(file_path, params, queue)
-        acli.start()
+        self.start_acli_thread(file_path, params, queue)
 
     def install_package(self, file_path, package, queue):
         """
         Install packages for the listed Arduino platforms
         """
         params = ["core", "install", package, "--format", "jsonmini"]
-        acli = ThreadedArduinoCLI(file_path, params, queue, 600)
-        acli.start()
+        self.start_acli_thread(file_path, params, queue)
 
     def upgrade_platforms(self, file_path, queue):
         """
         Upgrade Arduino CLI platforms
         """
         params = ["core", "upgrade", "--format", "jsonmini"]
-        acli = ThreadedArduinoCLI(file_path, params, queue)
-        acli.start()
+        self.start_acli_thread(file_path, params, queue)
 
     def install_library(self, file_path, library, queue):
         """
         Install the specified Arduino library
         """
         params = ["lib", "install", library, "--format", "jsonmini"]
-        acli = ThreadedArduinoCLI(file_path, params, queue)
-        acli.start()
+        self.start_acli_thread(file_path, params, queue)
 
     def list_boards(self, file_path, queue):
         """
         Returns a list of attached boards
         """
         params = ["board", "list", "--format", "jsonmini"]
-        acli = ThreadedArduinoCLI(file_path, params, queue, 120)
-        acli.start()
+        self.start_acli_thread(file_path, params, queue, 120)
 
     def upload_sketch(self, file_path, fqbn, port, sketch_dir, queue):
         """
@@ -466,13 +473,11 @@ class ArduinoCLI:
         params = ["upload", "-v", "-t", "-b", fqbn, "-p", port, sketch_dir, "--format", "jsonmini"]
         if fqbn.startswith('esp32:esp32'):
             params = params + ["--board-options", "UploadSpeed=115200"]
-        acli = ThreadedArduinoCLI(file_path, params, queue)
-        acli.start()
+        self.start_acli_thread(file_path, params, queue)
 
     def compile_sketch(self, file_path, fqbn, sketch_dir, queue):
         """
         Compiles the sketch ready to upload
         """
         params = ["compile", "-b", fqbn, sketch_dir, "--format", "jsonmini"]
-        acli = ThreadedArduinoCLI(file_path, params, queue)
-        acli.start()
+        self.start_acli_thread(file_path, params, queue)
